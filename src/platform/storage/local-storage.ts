@@ -36,6 +36,31 @@ export class LocalStorage extends StorageEngine {
   }
 
   /**
+   * @private
+   */
+  testParse(value: string) {
+      try {
+        //we have an array
+        let parsedValue = JSON.parse(value);
+        return (parsedValue);
+      } catch (e) {
+        //we have a string, number etc
+        return (value);
+      }
+  }
+
+  /**
+   * @private
+   */
+  testForArray(value: any) {
+    if (Array.isArray(value)) {
+      return (JSON.stringify(value));
+    } else {
+      return (value);
+    }
+  }
+
+  /**
    * Get the value of a key in LocalStorage
    * @param {string} key the key you want to lookup in LocalStorage
    * @returns {Promise} Returns a promise which is resolved when the value has been retrieved
@@ -43,17 +68,8 @@ export class LocalStorage extends StorageEngine {
   get(key: string): Promise<string> {
     return new Promise((resolve, reject) => {
       try {
-        let value = window.localStorage.getItem(key);
-        /* 
-          if JSON.parse() fails we have a string, number etc
-          if not we have an array
-        */
-        try {
-          let parsedValue = JSON.parse(value);
-          resolve(parsedValue);
-        } catch(e) {
-          resolve(value);
-        }
+        let value = this.testParse(window.localStorage.getItem(key));
+        resolve (value);
       } catch (e) {
         reject(e);
       }
@@ -68,20 +84,12 @@ export class LocalStorage extends StorageEngine {
    */
   set(key: string, value: any): Promise<any> {
     return new Promise((resolve, reject) => {
-      if (Array.isArray(value)) {
-        try {
-          window.localStorage.setItem(key, JSON.stringify(value));
-          resolve();
-        } catch (e) {
-          reject(e);
-        }
-      } else {
-        try {
-          window.localStorage.setItem(key, value);
-          resolve();
-        } catch (e) {
-          reject(e);
-        }
+      let checkedValue = this.testForArray(value);
+      try {
+        window.localStorage.setItem(key, checkedValue);
+        resolve();
+      } catch (e) {
+        reject(e);
       }
     });
   }
